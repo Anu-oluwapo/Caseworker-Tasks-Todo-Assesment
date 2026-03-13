@@ -9,6 +9,8 @@ import type { Task, TaskStatus } from '../types/task'
 const store = useTasksStore()
 
 const toDeleteId = ref<string | null>(null)
+const editingTask = ref<Task | null>(null)
+const editSaving = ref(false)
 const draggingTaskId = ref<string | null>(null)
 const draggingOverStatus = ref<TaskStatus | null>(null)
 
@@ -38,6 +40,18 @@ const groupedByStatus = computed<Record<TaskStatus, Task[]>>(() => {
 
 async function handleCreate(payload: { title: string; description?: string; dueAt: string }) {
   await store.createTask(payload)
+}
+
+async function handleEdit(payload: { title: string; description?: string; dueAt: string }) {
+  if (!editingTask.value) return
+
+  try {
+    editSaving.value = true
+    await store.updateTask(editingTask.value._id, payload)
+    editingTask.value = null
+  } finally {
+    editSaving.value = false
+  }
 }
 
 async function handleStatusChange(payload: { id: string; status: TaskStatus }) {
@@ -74,6 +88,15 @@ async function onDrop(status: TaskStatus) {
 
 function askDelete(id: string) {
   toDeleteId.value = id
+}
+
+function openEditModal(task: Task) {
+  editingTask.value = task
+}
+
+function closeEditModal() {
+  if (editSaving.value) return
+  editingTask.value = null
 }
 
 async function confirmDelete() {
@@ -137,6 +160,7 @@ async function confirmDelete() {
               :tasks="sorted"
               @status="handleStatusChange"
               @delete="askDelete"
+              @open="openEditModal"
             />
           </div>
         </section>
@@ -184,7 +208,12 @@ async function confirmDelete() {
                 @dragstart="onDragStart(task._id)"
                 @dragend="onDragEnd"
               >
-                <TaskList :tasks="[task]" @status="handleStatusChange" @delete="askDelete" />
+                <TaskList
+                  :tasks="[task]"
+                  @status="handleStatusChange"
+                  @delete="askDelete"
+                  @open="openEditModal"
+                />
               </div>
             </div>
             <p
@@ -196,6 +225,27 @@ async function confirmDelete() {
           </section>
         </div>
       </section>
+    </div>
+
+    <div
+      v-if="editingTask"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[2px]"
+      @click.self="closeEditModal"
+    >
+      <div class="w-full max-w-2xl">
+        <TaskForm
+          mode="edit"
+          heading="Edit task"
+          submit-label="Save changes"
+          :initial-values="{
+            title: editingTask.title,
+            description: editingTask.description,
+            dueAt: editingTask.dueAt,
+          }"
+          @submit="handleEdit"
+          @cancel="closeEditModal"
+        />
+      </div>
     </div>
 
     <ConfirmDialog

@@ -7,6 +7,7 @@ defineProps<{ tasks: Task[] }>()
 const emit = defineEmits<{
   (e: 'status', value: { id: string; status: TaskStatus }): void
   (e: 'delete', id: string): void
+  (e: 'open', task: Task): void
 }>()
 </script>
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{
       :task="t"
       @status="emit('status', $event)"
       @delete="emit('delete', $event)"
+      @open="emit('open', $event)"
     />
   </div>
 </template>

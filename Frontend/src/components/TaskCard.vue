@@ -5,6 +5,7 @@ const props = defineProps<{ task: Task }>()
 const emit = defineEmits<{
   (e: 'status', value: { id: string; status: TaskStatus }): void
   (e: 'delete', id: string): void
+  (e: 'open', task: Task): void
 }>()
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
@@ -31,7 +32,12 @@ function dueLabel(iso: string) {
 
 <template>
   <article
-    class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5"
+    class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5"
+    role="button"
+    tabindex="0"
+    @click="emit('open', props.task)"
+    @keydown.enter="emit('open', props.task)"
+    @keydown.space.prevent="emit('open', props.task)"
   >
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
@@ -54,18 +60,19 @@ function dueLabel(iso: string) {
 
       <button
         class="shrink-0 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
-        @click="emit('delete', props.task._id)"
+        @click.stop="emit('delete', props.task._id)"
         aria-label="Delete task"
       >
         Delete
       </button>
     </div>
 
-    <div class="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
+    <div class="mt-4 flex flex-wrap items-center gap-2 sm:gap-3" @click.stop>
       <label class="text-xs font-semibold uppercase tracking-wide text-slate-600">Status</label>
       <select
         class="block w-full rounded-xl border-slate-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-48"
         :value="props.task.status"
+        @click.stop
         @change="
           emit('status', {
             id: props.task._id,

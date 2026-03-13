@@ -31,6 +31,11 @@ export const useTasksStore = defineStore("tasks", {
       this.items = this.items.map((t) => (t._id === id ? updated : t));
       return updated;
     },
+    async updateTask(id, payload) {
+      const updated = await http.patch(`/api/tasks/${id}`, payload);
+      this.items = this.items.map((t) => (t._id === id ? updated : t));
+      return updated;
+    },
     async deleteTask(id) {
       await http.del(`/api/tasks/${id}`);
       this.items = this.items.filter((t) => t._id !== id);
