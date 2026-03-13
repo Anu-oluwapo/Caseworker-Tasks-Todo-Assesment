@@ -42,7 +42,7 @@ async function handleCreate(payload: { title: string; description?: string; dueA
   await store.createTask(payload)
 }
 
-async function handleEdit(payload: { title: string; description?: string; dueAt: string }) {
+async function handleEdit(payload: Task) {
   if (!editingTask.value) return
 
   try {
@@ -91,6 +91,7 @@ function askDelete(id: string) {
 }
 
 function openEditModal(task: Task) {
+  store.getTaskById(task._id)
   editingTask.value = task
 }
 

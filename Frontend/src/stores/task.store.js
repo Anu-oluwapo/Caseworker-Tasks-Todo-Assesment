@@ -4,6 +4,7 @@ import { http } from '../api/http'
 export const useTasksStore = defineStore('tasks', {
   state: () => ({
     items: [],
+    task: {},
     loading: false,
     error: '',
   }),
@@ -19,6 +20,19 @@ export const useTasksStore = defineStore('tasks', {
         this.loading = false
       }
     },
+
+    async getTaskById(id) {
+      this.loading = true
+      this.error = ''
+      try {
+        this.task = await http.get(`/api/tasks/${id}`)
+      } catch (e) {
+        this.error = e?.message ?? 'Unable to get Task'
+      } finally {
+        this.loading = false
+      }
+    },
+
     async createTask(payload) {
       const created = await http.post('/api/tasks', payload)
       this.items = [created, ...this.items].sort((a, b) => a.dueAt.localeCompare(b.dueAt))
@@ -30,7 +44,9 @@ export const useTasksStore = defineStore('tasks', {
       return updated
     },
     async updateTask(id, payload) {
-      const updated = await http.patch(`/api/tasks/${id}`, payload)
+      const task = this.items.find((t) => t._id === id)
+      if (!task) return null
+      const updated = await http.patch(`/api/tasks/${id}`, { ...task, ...payload })
       this.items = this.items.map((t) => (t._id === id ? updated : t))
       return updated
     },

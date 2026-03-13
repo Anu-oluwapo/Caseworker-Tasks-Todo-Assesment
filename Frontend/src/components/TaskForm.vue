@@ -22,7 +22,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'submit', payload: { title: string; description?: string; dueAt: string }): void
+  (e: 'submit', payload: TaskFormValues): void
   (e: 'cancel'): void
 }>()
 

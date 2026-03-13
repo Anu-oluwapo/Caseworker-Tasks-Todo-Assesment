@@ -24,6 +24,7 @@ taskRouter.post("/", asyncHandler(controller.create));
  *     summary: Delete a task
  */
 taskRouter.get("/:id", asyncHandler(controller.getById));
+taskRouter.patch("/:id", asyncHandler(controller.patchTask));
 taskRouter.delete("/:id", asyncHandler(controller.remove));
 
 /**

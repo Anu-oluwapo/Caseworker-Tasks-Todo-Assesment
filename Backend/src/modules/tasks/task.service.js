@@ -16,6 +16,10 @@ export async function updateTaskStatus(id, status) {
   return Task.findByIdAndUpdate(id, { status }, { new: true });
 }
 
+export async function updateTask(id, data) {
+  return Task.findByIdAndUpdate(id, data, { new: true });
+}
+
 export async function deleteTask(id) {
   return Task.findByIdAndDelete(id);
 }
