@@ -1,5 +1,9 @@
 import { HttpError } from "../../utils/httpError.js";
-import { createTaskSchema, updateStatusSchema } from "./task.validation.js";
+import {
+  createTaskSchema,
+  updateStatusSchema,
+  updateTaskSchema,
+} from "./task.validation.js";
 import * as service from "./task.service.js";
 
 export async function create(req, res) {
@@ -31,6 +35,15 @@ export async function patchStatus(req, res) {
     req.params.id,
     parsed.data.status,
   );
+  if (!updated) throw new HttpError(404, "Task not found");
+  res.json(updated);
+}
+
+export async function patchTask(req, res) {
+  const parsed = updateTaskSchema.safeParse(req.body);
+  if (!parsed.success)
+    throw new HttpError(400, "Invalid payload", parsed.error.flatten());
+  const updated = await service.updateTask(req.params.id, parsed.data);
   if (!updated) throw new HttpError(404, "Task not found");
   res.json(updated);
 }
