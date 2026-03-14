@@ -9,8 +9,7 @@
 [![Pinia](https://img.shields.io/badge/Pinia-3.x-ffd859?logo=pinia&logoColor=black)](https://pinia.vuejs.org/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38bdf8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Playwright](https://img.shields.io/badge/E2E-Playwright-45ba4b?logo=playwright&logoColor=white)](https://playwright.dev/)
-[![Vitest](https://img.shields.io/badge/Unit-Vitest-6e9f18?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Storybook](https://img.shields.io/badge/Storybook-10.x-ff4785?logo=storybook&logoColor=white)](https://storybook.js.org/)
 
 </div>
 
@@ -28,7 +27,7 @@
 | 🏷️ **Kanban board**   | Three-column board grouped by status (`To do`, `In progress`, `Done`)                               |
 | 🖱️ **Drag & drop**    | Drag task cards between board columns to update status instantly                                    |
 | 🌗 **Dark mode**      | Animated sun→moon toggle persisted to `localStorage`; respects `prefers-color-scheme` on first load |
-| ♿ **Accessible**     | Semantic HTML, ARIA roles, keyboard navigation on interactive cards                                 |
+| ♿ **Accessible**     | Semantic HTML, ARIA roles/labels, `data-testid` attributes, keyboard navigation on all cards        |
 
 ---
 
@@ -37,14 +36,13 @@
 | Layer       | Technology                                                                                                             |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Framework   | [Vue 3](https://vuejs.org/) with `<script setup>` + Composition API                                                    |
-| Language    | TypeScript (strict)                                                                                                    |
+| Language    | TypeScript (strict mode)                                                                                               |
 | Build tool  | [Vite 7](https://vite.dev/)                                                                                            |
-| State       | [Pinia 3](https://pinia.vuejs.org/)                                                                                    |
-| Routing     | [Vue Router 5](https://router.vuejs.org/)                                                                              |
+| State       | [Pinia 3](https://pinia.vuejs.org/) — options store                                                                    |
+| Routing     | [Vue Router 5](https://router.vuejs.org/) — single route `/`                                                           |
 | Styling     | [Tailwind CSS 3](https://tailwindcss.com/) + [`@tailwindcss/forms`](https://github.com/tailwindlabs/tailwindcss-forms) |
-| Unit tests  | [Vitest](https://vitest.dev/) + [Vue Test Utils](https://test-utils.vuejs.org/) + jsdom                                |
-| E2E tests   | [Playwright](https://playwright.dev/) (Chromium, Firefox, WebKit)                                                      |
-| Dev tooling | [Vue DevTools](https://devtools.vuejs.org/) (Vite plugin), Prettier                                                    |
+| Testing     | [Storybook 10](https://storybook.js.org/) — CSF3 stories + `play` interaction tests                                    |
+| Dev tooling | [Vue DevTools](https://devtools.vuejs.org/) (Vite plugin, skipped in Storybook), Prettier                              |
 
 ---
 
@@ -53,23 +51,40 @@
 ```
 src/
 ├── api/
-│   └── http.js            # Thin fetch wrapper (GET / POST / PATCH / DELETE)
+│   └── http.js                    # Thin fetch wrapper (GET / POST / PATCH / DELETE)
 ├── components/
-│   ├── ConfirmDialog.vue  # Reusable "are you sure?" modal
-│   ├── TaskCard.vue       # Individual task card (click-to-edit, drag, status, delete)
-│   ├── TaskForm.vue       # Dual-mode form — create or edit a task
-│   └── TaskList.vue       # Renders a list of TaskCards and bubbles events up
+│   ├── ConfirmDialog.vue          # Reusable "are you sure?" modal
+│   ├── ConfirmDialog.stories.ts   # Stories: Open, Closed
+│   ├── TaskCard.vue               # Individual task card (click-to-edit, drag, status, delete)
+│   ├── TaskCard.stories.ts        # Stories: Todo, InProgress, Interactions
+│   ├── TaskForm.vue               # Dual-mode form — create or edit a task
+│   ├── TaskForm.stories.ts        # Stories: CreateMode, ValidationStates, EditMode
+│   ├── TaskList.vue               # Renders a list of TaskCards and bubbles events up
+│   └── TaskList.stories.ts        # Stories: Default, BubblingEvents
 ├── router/
-│   └── index.js           # Single route: / → TasksView
+│   └── index.js                   # Single route: / → TasksView
 ├── stores/
-│   └── task.store.js      # Pinia store (fetchAll, createTask, updateTask, updateStatus, deleteTask)
+│   └── task.store.js              # Pinia store — all task CRUD actions
+├── stories/
+│   └── taskFixtures.ts            # Shared story fixtures and helpers
 ├── types/
-│   └── task.ts            # Task & TaskStatus TypeScript types
+│   └── task.ts                    # Task & TaskStatus TypeScript interfaces
+├── utils/
+│   └── date.ts                    # formatDueDate() — human-readable date formatter
 ├── views/
-│   └── TasksView.vue      # Main view — orchestrates all components and state
-├── App.vue                # Root component (router-view)
-├── index.css              # Tailwind base/components/utilities directives
-└── main.js                # App entry point
+│   ├── TasksView.vue              # Main view — orchestrates all components and state
+│   └── TasksView.stories.ts       # Stories: HappyPath, DragAndDropStatusUpdate, LoadError
+├── App.vue                        # Root component (router-view)
+├── App.stories.ts                 # App shell story with memory router
+├── index.css                      # Tailwind base/components/utilities directives
+└── main.js                        # App entry point
+```
+
+```
+.storybook/
+├── main.js           # Storybook config — stories glob, addons, framework
+├── preview.js        # Global decorators, parameters, imports index.css
+└── vitest.setup.js   # Vitest setup file for Storybook addon-vitest
 ```
 
 ---
@@ -78,7 +93,7 @@ src/
 
 - **Node.js** `^20.19.0` or `>=22.12.0`
 - **npm** (bundled with Node)
-- A running **backend API** at `http://localhost:4000` (or set `VITE_API_BASE` below)
+- A running **backend API** at `http://localhost:4000` (or configure `VITE_API_BASE` — see below)
 
 ---
 
@@ -125,7 +140,16 @@ Then open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 🧪 Storybook Testing
 
-This project uses **CSF3 stories + play functions** as the main interaction-testing workflow.
+This project uses **CSF3 stories with `play` functions** as the primary interaction-testing workflow. Stories are written in TypeScript and cover all components, views, props, emits, and user flows end-to-end.
+
+### Storybook addons
+
+| Addon                      | Purpose                                                               |
+| -------------------------- | --------------------------------------------------------------------- |
+| `@storybook/addon-vitest`  | Runs story `play` functions as Vitest tests; surfaces pass/fail state |
+| `@storybook/addon-a11y`    | Automated accessibility audits (WCAG AA) on every story               |
+| `@storybook/addon-docs`    | Auto-generates component docs from props and JSDoc comments           |
+| `@chromatic-com/storybook` | Chromatic visual regression testing integration                       |
 
 ### 1) Start Storybook
 
@@ -140,29 +164,34 @@ Open [http://localhost:6006](http://localhost:6006).
 For each story:
 
 - Open the story in the left sidebar
-- View the **Interactions** panel to see each play step
-- Check the **A11y** panel for accessibility issues
-- Use the **Tests** panel (from addon-vitest) to verify pass/fail state
+- View the **Interactions** panel to see each play step pass or fail in real time
+- Check the **A11y** panel for accessibility violations
+- Use the **Tests** panel (addon-vitest) to see an overall pass/fail summary
 
-This is especially useful for stories that validate:
+### 3) What is tested
 
-- emitted events (`@open`, `@delete`, `@status`, `@submit`, `@confirm`, `@cancel`)
-- mocked API/store behavior (`fn()`, `mockReturnValue`, `mockResolvedValue`)
-- keyboard/click flows and modal behavior
+| Story file                 | Stories                                             | What is verified                                                                      |
+| -------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `TaskForm.stories.ts`      | `CreateMode`, `ValidationStates`, `EditMode`        | form submission payload, validation error, cancel emit, pre-fill from `initialValues` |
+| `TaskCard.stories.ts`      | `Todo`, `InProgress`, `Interactions`                | status badge, click-to-open, status change, delete, event isolation                   |
+| `TaskList.stories.ts`      | `Default`, `BubblingEvents`                         | renders all cards, all 3 events bubble correctly to parent                            |
+| `ConfirmDialog.stories.ts` | `Open`, `Closed`                                    | dialog ARIA attributes, cancel/confirm emits, hidden when `open=false`                |
+| `TasksView.stories.ts`     | `HappyPath`, `DragAndDropStatusUpdate`, `LoadError` | create→edit→delete flow, drag-drop status update, API error state                     |
+| `App.stories.ts`           | `Default`                                           | app shell renders with memory router                                                  |
 
-### 3) Build Storybook for CI/release validation
+### Mocking strategy
+
+- **API**: `http.get/post/patch/del` are mutable properties on the exported `http` object — stories overwrite them with `fn().mockImplementation(...)` to simulate the backend without a real server.
+- **Store**: a fresh Pinia instance is created per story via `createPinia()` + `setActivePinia()` and reset with `store.$reset()`.
+- **Spies**: all event handlers use `fn().mockReturnValue(undefined)` so play tests can assert `toHaveBeenCalledWith(...)` and `.mock.calls`.
+
+### 4) Build Storybook
 
 ```bash
 npm run build-storybook
 ```
 
-This ensures all stories compile correctly in a production Storybook build.
-
-### Where stories live
-
-- Component stories: `src/components/*.stories.ts`
-- View stories: `src/views/*.stories.ts`
-- App shell story: `src/App.stories.ts`
+Produces a static Storybook in `storybook-static/` — useful for CI or hosting as a component catalogue.
 
 ---
 
@@ -171,27 +200,34 @@ This ensures all stories compile correctly in a production Storybook build.
 ```
 TasksView (orchestrator)
 │
-├── TaskForm           ← create mode (emits @submit → store.createTask)
+├── TaskForm                 ← create mode  (@submit → store.createTask)
 │
-├── TaskList           ← scrollable all-tasks panel
-│   └── TaskCard[]     ← emits @open, @status, @delete
+├── section: All Created Tasks
+│   └── TaskList             ← sorted by dueAt, scrollable
+│       └── TaskCard[]       ← @open, @status, @delete
 │
-├── [Board by status]  ← 3 × kanban column, drag & drop
-│   └── TaskList       ← per-column task cards (same component, drag wrapper)
+├── section: Board by status
+│   ├── column: To do
+│   │   └── TaskList (draggable wrappers)
+│   ├── column: In progress
+│   │   └── TaskList (draggable wrappers)
+│   └── column: Done
+│       └── TaskList (draggable wrappers)
 │
-├── TaskForm (modal)   ← edit mode, pre-filled, emits @submit → store.updateTask
-└── ConfirmDialog      ← delete confirmation
+├── TaskForm (modal)         ← edit mode, pre-filled  (@submit → store.updateTask)
+└── ConfirmDialog            ← delete confirmation  (@confirm → store.deleteTask)
 ```
 
-### State (Pinia — `task.store.js`)
+### State (`src/stores/task.store.js` — Pinia options store)
 
-| Action                     | HTTP call                     | Effect                            |
-| -------------------------- | ----------------------------- | --------------------------------- |
-| `fetchAll()`               | `GET /api/tasks`              | Replaces `items[]`                |
-| `createTask(payload)`      | `POST /api/tasks`             | Prepends + re-sorts `items[]`     |
-| `updateTask(id, payload)`  | `PATCH /api/tasks/:id`        | Updates matching item in-place    |
-| `updateStatus(id, status)` | `PATCH /api/tasks/:id/status` | Updates `status` of matching item |
-| `deleteTask(id)`           | `DELETE /api/tasks/:id`       | Removes item from `items[]`       |
+| Action                     | HTTP call                     | Store effect                               |
+| -------------------------- | ----------------------------- | ------------------------------------------ |
+| `fetchAll()`               | `GET /api/tasks`              | Replaces `items[]`; sets `loading`/`error` |
+| `getTaskById(id)`          | `GET /api/tasks/:id`          | Writes to `task` (single task object)      |
+| `createTask(payload)`      | `POST /api/tasks`             | Prepends created task, re-sorts by dueAt   |
+| `updateTask(id, payload)`  | `PATCH /api/tasks/:id`        | Merges patch, updates matching item        |
+| `updateStatus(id, status)` | `PATCH /api/tasks/:id/status` | Updates `status` of matching item          |
+| `deleteTask(id)`           | `DELETE /api/tasks/:id`       | Filters item out of `items[]`              |
 
 ### API helper (`src/api/http.js`)
 
@@ -199,8 +235,9 @@ A minimal `fetch` wrapper that:
 
 - Prefixes every request with `VITE_API_BASE` (default `http://localhost:4000`)
 - Always sends `Content-Type: application/json`
-- Throws a descriptive `Error` on non-`2xx` responses
+- Throws a descriptive `Error` on non-`2xx` responses (using `body.message` if available)
 - Returns `undefined` on `204 No Content`
+- Exposes `http.get`, `http.post`, `http.patch`, `http.del` as **direct mutable properties**, enabling story-level monkey-patching without module mocking
 
 ---
 
@@ -213,11 +250,15 @@ A dual-mode form component reused for both creating and editing tasks.
 | Prop            | Type                             | Default         | Description                                           |
 | --------------- | -------------------------------- | --------------- | ----------------------------------------------------- |
 | `mode`          | `'create' \| 'edit'`             | `'create'`      | Controls reset-on-submit and Cancel button visibility |
-| `heading`       | `string`                         | `'Create task'` | Card heading text                                     |
+| `heading`       | `string`                         | `'Create task'` | Form card heading                                     |
 | `submitLabel`   | `string`                         | `'Add task'`    | Submit button label                                   |
 | `initialValues` | `{ title, description?, dueAt }` | —               | Pre-fills fields in edit mode                         |
 
-**Events:** `@submit(payload)`, `@cancel`
+**Emits:** `@submit(payload: { title, description?, dueAt })`, `@cancel`
+
+**Validation:** title must be ≥ 2 characters; due date is required. Errors render in a `role="alert"` paragraph.
+
+**Key `data-testid` attributes:** `task-form`, `form-error`, `form-submit-btn`, `form-cancel-btn`
 
 ---
 
@@ -225,22 +266,31 @@ A dual-mode form component reused for both creating and editing tasks.
 
 Interactive card for a single task.
 
-- **Click / Enter / Space** → emits `@open` to trigger the edit modal
-- **Status select** → emits `@status` (stops propagation so it doesn't open the modal)
-- **Trash button** → emits `@delete` (stops propagation)
-- Status badge is colour-coded: `todo` = slate, `in_progress` = amber, `done` = emerald
+| Interaction              | Behaviour                                                 |
+| ------------------------ | --------------------------------------------------------- |
+| Click / Enter / Space    | Emits `@open(task)` — opens the edit modal                |
+| Status `<select>` change | Emits `@status({ id, status })` — stops event propagation |
+| Trash button click       | Emits `@delete(id)` — stops event propagation             |
+
+Status badge colours: `todo` → slate · `in_progress` → amber · `done` → emerald
+
+**Key `data-testid` attributes:** `task-card-{id}`, `task-status-badge`, `task-due-date`, `task-status-select`
+
+**ARIA:** `role="button"`, `aria-label="Task: {title}"` on card; `aria-label="Delete task"` on trash button; `aria-label="Status for {title}"` on select
 
 ---
 
 ### `TaskList.vue`
 
-Thin wrapper that renders a list of `TaskCard`s and bubbles all events (`@status`, `@delete`, `@open`) up to the parent.
+Thin wrapper that renders a list of `TaskCard`s and bubbles all events (`@status`, `@delete`, `@open`) up to the parent unchanged.
+
+**`data-testid`:** `task-list`
 
 ---
 
 ### `ConfirmDialog.vue`
 
-A blocking modal for destructive confirmations.
+A blocking confirmation modal for destructive actions.
 
 | Prop      | Type      | Description         |
 | --------- | --------- | ------------------- |
@@ -248,7 +298,39 @@ A blocking modal for destructive confirmations.
 | `title`   | `string`  | Dialog heading      |
 | `message` | `string`  | Body text           |
 
-**Events:** `@confirm`, `@cancel`
+**Emits:** `@confirm`, `@cancel`
+
+**ARIA:** `role="dialog"`, `aria-modal="true"`, `aria-labelledby="confirm-dialog-title"`, `aria-describedby="confirm-dialog-message"`
+
+**Key `data-testid` attributes:** `confirm-dialog`, `confirm-dialog-backdrop`, `dialog-cancel-btn`, `dialog-confirm-btn`
+
+---
+
+## 🔧 Utilities
+
+### `src/utils/date.ts` — `formatDueDate(value: string): string`
+
+Converts an ISO 8601 date string into a human-readable locale-aware string using `Intl.DateTimeFormat`.
+
+**Output format:** `Mon, 20 Mar 2026, 09:30 AM` _(locale-sensitive)_
+
+Returns `"Invalid due date"` for unparseable input values.
+
+Used in `TaskCard.vue` to display the `dueAt` field on each task card.
+
+---
+
+## 📖 Story Fixtures (`src/stories/taskFixtures.ts`)
+
+Shared helpers used across all story files to keep test data consistent and avoid repetition.
+
+| Export                        | Description                                                |
+| ----------------------------- | ---------------------------------------------------------- |
+| `createStoryTask(overrides?)` | Returns a single `Task` with sensible defaults             |
+| `storyTasks`                  | Array of 3 tasks — `todo`, `in_progress`, `done`           |
+| `cloneTask(task)`             | Shallow-copies a single task (prevents mutation)           |
+| `cloneTasks(tasks?)`          | Deep-copies the full task array (defaults to `storyTasks`) |
+| `statusLabel(status)`         | Maps `TaskStatus` → human label (`"To do"` etc.)           |
 
 ---
 
@@ -256,9 +338,10 @@ A blocking modal for destructive confirmations.
 
 Dark mode is implemented using Tailwind's `class` strategy:
 
-- The `dark` class is toggled on `<html>` via the animated sun→moon switch in the header.
-- The preference is written to `localStorage` under the key `theme`.
-- On page load, the app reads `localStorage` first; if no preference is saved it falls back to the OS-level `prefers-color-scheme` media query.
+- The `dark` class is toggled on `<html>` via the animated sun→moon pill switch in the header.
+- The preference is persisted to `localStorage` under the key `theme`.
+- On page load, `localStorage` is read first; if no value is saved it falls back to the OS-level `prefers-color-scheme` media query.
+- All components carry full `dark:` Tailwind variants for backgrounds, borders, text, and rings.
 
 ---
 
@@ -274,6 +357,6 @@ Dark mode is implemented using Tailwind's `class` strategy:
 
 <div align="center">
 
-Made with ❤️ using Vue 3 + Vite
+Made with ❤️ using Vue 3 + Vite + Storybook
 
 </div>

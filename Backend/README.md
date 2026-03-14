@@ -155,6 +155,13 @@ CORS_ORIGIN=http://localhost:5173
 | `MONGODB_URI` | —                       | ✅       | MongoDB connection string       |
 | `CORS_ORIGIN` | `http://localhost:5173` | ❌       | Allowed CORS origin             |
 
+**Database credentials:**
+
+| Field    | Value      |
+| -------- | ---------- |
+| Username | `username` |
+| Password | `Password` |
+
 > ⚠️ **Never commit your `.env` file** or real credentials to version control.
 
 ---
