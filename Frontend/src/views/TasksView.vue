@@ -36,7 +36,9 @@ onMounted(() => {
   }
 })
 
-const sorted = computed(() => [...store.items].sort((a, b) => a.dueAt.localeCompare(b.dueAt)))
+const sorted = computed(() =>
+  [...(store.items as Task[])].sort((a, b) => a.dueAt.localeCompare(b.dueAt)),
+)
 
 const groupedByStatus = computed<Record<TaskStatus, Task[]>>(() => {
   const empty: Record<TaskStatus, Task[]> = {
@@ -56,7 +58,7 @@ async function handleCreate(payload: { title: string; description?: string; dueA
   await store.createTask(payload)
 }
 
-async function handleEdit(payload: Task) {
+async function handleEdit(payload: { title: string; description?: string; dueAt: string }) {
   if (!editingTask.value) return
 
   try {
@@ -90,7 +92,7 @@ async function onDrop(status: TaskStatus) {
   draggingOverStatus.value = null
   if (!taskId) return
 
-  const task = store.items.find((t) => t._id === taskId)
+  const task = (store.items as Task[]).find((t) => t._id === taskId)
   if (!task || task.status === status) {
     draggingTaskId.value = null
     return
@@ -205,7 +207,7 @@ async function confirmDelete() {
             <h2
               class="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-lg"
             >
-              Tasks
+              All Created Tasks
             </h2>
             <button
               class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"

@@ -12,7 +12,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="space-y-3" data-testid="task-list">
     <TaskCard
       v-for="t in tasks"
       :key="t._id"

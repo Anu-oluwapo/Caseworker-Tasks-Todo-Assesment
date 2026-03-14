@@ -112,47 +112,57 @@ Then open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 📦 Available Scripts
 
-| Script              | Description                                      |
-| ------------------- | ------------------------------------------------ |
-| `npm run dev`       | Start the Vite dev server with HMR               |
-| `npm run build`     | Type-check and build for production into `dist/` |
-| `npm run preview`   | Preview the production build locally             |
-| `npm run test:unit` | Run unit tests with Vitest                       |
-| `npm run test:e2e`  | Run Playwright end-to-end tests                  |
-| `npm run format`    | Format all source files with Prettier            |
+| Script                    | Description                                                               |
+| ------------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`             | Start the Vite dev server with HMR                                        |
+| `npm run build`           | Build the app for production into `dist/`                                 |
+| `npm run preview`         | Preview the production build locally                                      |
+| `npm run storybook`       | Start Storybook at `http://localhost:6006` (**primary testing workflow**) |
+| `npm run build-storybook` | Build static Storybook output for CI/release validation                   |
+| `npm run format`          | Format all source files with Prettier                                     |
 
 ---
 
-## 🧪 Testing
+## 🧪 Storybook Testing
 
-### Unit tests (Vitest)
+This project uses **CSF3 stories + play functions** as the main interaction-testing workflow.
 
-```bash
-npm run test:unit
-```
-
-Tests live in `src/__tests__/` and use Vue Test Utils with a jsdom environment.
-
-### End-to-end tests (Playwright)
+### 1) Start Storybook
 
 ```bash
-# Install browsers on first run
-npx playwright install
-
-# Run all E2E tests
-npm run test:e2e
-
-# Run only on Chromium
-npm run test:e2e -- --project=chromium
-
-# Run in headed mode (shows the browser)
-npm run test:e2e -- --headed
-
-# Debug mode
-npm run test:e2e -- --debug
+npm run storybook
 ```
 
-E2E specs live in `e2e/`. Playwright is configured to spin up the dev server automatically before running the tests.
+Open [http://localhost:6006](http://localhost:6006).
+
+### 2) Run interaction tests from the Storybook UI
+
+For each story:
+
+- Open the story in the left sidebar
+- View the **Interactions** panel to see each play step
+- Check the **A11y** panel for accessibility issues
+- Use the **Tests** panel (from addon-vitest) to verify pass/fail state
+
+This is especially useful for stories that validate:
+
+- emitted events (`@open`, `@delete`, `@status`, `@submit`, `@confirm`, `@cancel`)
+- mocked API/store behavior (`fn()`, `mockReturnValue`, `mockResolvedValue`)
+- keyboard/click flows and modal behavior
+
+### 3) Build Storybook for CI/release validation
+
+```bash
+npm run build-storybook
+```
+
+This ensures all stories compile correctly in a production Storybook build.
+
+### Where stories live
+
+- Component stories: `src/components/*.stories.ts`
+- View stories: `src/views/*.stories.ts`
+- App shell story: `src/App.stories.ts`
 
 ---
 

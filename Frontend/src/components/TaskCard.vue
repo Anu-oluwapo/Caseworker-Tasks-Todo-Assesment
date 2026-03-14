@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Task, TaskStatus } from '../types/task'
+import { formatDueDate } from '../utils/date'
 
 const props = defineProps<{ task: Task }>()
 const emit = defineEmits<{
@@ -23,11 +24,6 @@ function statusBadgeClass(status: TaskStatus) {
   }
   return 'bg-slate-100 text-slate-700 ring-slate-600/20 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-500/20'
 }
-
-function dueLabel(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleString()
-}
 </script>
 
 <template>
@@ -35,6 +31,8 @@ function dueLabel(iso: string) {
     class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800 sm:p-5"
     role="button"
     tabindex="0"
+    :aria-label="`Task: ${props.task.title}`"
+    :data-testid="`task-card-${props.task._id}`"
     @click="emit('open', props.task)"
     @keydown.enter="emit('open', props.task)"
     @keydown.space.prevent="emit('open', props.task)"
@@ -49,6 +47,7 @@ function dueLabel(iso: string) {
         <span
           class="mt-2 inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
           :class="statusBadgeClass(props.task.status)"
+          data-testid="task-status-badge"
         >
           {{ statusOptions.find((o) => o.value === props.task.status)?.label ?? props.task.status }}
         </span>
@@ -58,8 +57,8 @@ function dueLabel(iso: string) {
         >
           {{ props.task.description }}
         </p>
-        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Due: <span class="font-medium">{{ dueLabel(props.task.dueAt) }}</span>
+        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400" data-testid="task-due-date">
+          Due: <span class="font-medium">{{ formatDueDate(props.task.dueAt) }}</span>
         </p>
       </div>
 
@@ -88,10 +87,14 @@ function dueLabel(iso: string) {
 
     <div class="mt-4 flex flex-wrap items-center gap-2 sm:gap-3" @click.stop>
       <label
+        :for="`task-status-${props.task._id}`"
         class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400"
         >Status</label
       >
       <select
+        :id="`task-status-${props.task._id}`"
+        :aria-label="`Status for ${props.task.title}`"
+        data-testid="task-status-select"
         class="block w-full rounded-xl border-slate-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 sm:w-48"
         :value="props.task.status"
         @click.stop
