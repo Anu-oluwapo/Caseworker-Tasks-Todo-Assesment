@@ -2,7 +2,7 @@
 
 # 🗂️ Caseworker Tasks
 
-**Frontend for Caseworker-Tasks: Assessment by Ministry of Justice, built with Vue 3, Pinia, and Tailwind CSS.**
+**Frontend for the Caseworker Tasks assessment for the UK Ministry of Justice, built with Vue 3, Pinia, and Tailwind CSS.**
 
 [![Vue](https://img.shields.io/badge/Vue-3.x-42b883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-7.x-646cff?logo=vite&logoColor=white)](https://vite.dev/)
