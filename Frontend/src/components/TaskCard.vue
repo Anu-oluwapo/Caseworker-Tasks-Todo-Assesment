@@ -5,7 +5,7 @@ import { formatDueDate } from '../utils/date'
 const props = defineProps<{ task: Task }>()
 const emit = defineEmits<{
   (e: 'status', value: { id: string; status: TaskStatus }): void
-  (e: 'delete', id: string): void
+  (e: 'delete', task: Task): void
   (e: 'open', task: Task): void
 }>()
 
@@ -64,7 +64,7 @@ function statusBadgeClass(status: TaskStatus) {
 
       <button
         class="shrink-0 rounded-xl border border-red-200 p-2 text-red-600 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 dark:border-red-800/60 dark:text-red-400 dark:hover:bg-red-900/20"
-        @click.stop="emit('delete', props.task._id)"
+        @click.stop="emit('delete', props.task)"
         aria-label="Delete task"
       >
         <svg

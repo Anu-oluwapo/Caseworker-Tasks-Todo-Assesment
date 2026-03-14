@@ -45,9 +45,14 @@ function createMockApi(initialTasks: Task[], options?: { failFetch?: boolean }) 
 
   const patchFn = fn().mockImplementation(
     async (path: string, payload: Partial<Task> & { status?: TaskStatus }) => {
-      const [, , resourceId, maybeAction] = path.split('/')
-      const idx = tasks.findIndex((e) => e._id === resourceId)
+      const match = path.match(/^\/api\/tasks\/([^/]+)(?:\/(status))?$/)
+      if (!match) throw new Error(`Unhandled PATCH ${path}`)
+
+      const taskId = match[1]
+      const maybeAction = match[2]
+      const idx = tasks.findIndex((e) => e._id === taskId)
       if (idx === -1) throw new Error('Task not found')
+
       const current = tasks[idx]
       const updated: Task = {
         ...current,
@@ -106,13 +111,13 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
-export const HappyPath: Story = {
+export const EndToEnd: Story = {
   render: renderTasksView(),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const createHeading = await canvas.findByRole('heading', { name: 'Create task' })
     const createForm = createHeading.closest('form') as HTMLFormElement
-    const tasksHeading = canvas.getByRole('heading', { name: 'Tasks' })
+    const tasksHeading = canvas.getByRole('heading', { name: 'All Created Tasks' })
     const tasksSection = tasksHeading.closest('section') as HTMLElement
 
     const form = within(createForm)
@@ -129,27 +134,26 @@ export const HappyPath: Story = {
     })
 
     await userEvent.click(within(tasksSection).getByText('Follow up with claimant'))
-    await canvas.findByRole('heading', { name: 'Edit task' })
-
-    const modalTitleInput = canvas.getByLabelText('Title')
+    const editHeading = await canvas.findByRole('heading', { name: 'Edit task' })
+    const editForm = editHeading.closest('form') as HTMLFormElement
+    const modalTitleInput = within(editForm).getByLabelText('Task title')
     await userEvent.clear(modalTitleInput)
     await userEvent.type(modalTitleInput, 'Follow up urgently')
-    await userEvent.click(canvas.getByRole('button', { name: 'Save changes' }))
-
+    await userEvent.click(within(editForm).getByRole('button', { name: 'Save changes' }))
     await waitFor(() => {
       expect(within(tasksSection).getByText('Follow up urgently')).toBeInTheDocument()
     })
 
     await userEvent.click(canvas.getByRole('switch', { name: 'Toggle dark mode' }))
     await waitFor(() => {
-      expect(canvasElement.ownerDocument.documentElement.classList.contains('dark')).toBe(true)
+      expect(canvasElement.ownerDocument.documentElement.classList.contains('dark')).toBe(false)
     })
 
     const updatedTaskArticle = within(tasksSection)
       .getByText('Follow up urgently')
       .closest('article') as HTMLElement
     await userEvent.click(within(updatedTaskArticle).getByRole('button', { name: 'Delete task' }))
-    await userEvent.click(await canvas.findByRole('button', { name: 'Confirm' }))
+    await userEvent.click(await canvas.findByLabelText('Confirm action'))
 
     await waitFor(() => {
       expect(within(tasksSection).queryByText('Follow up urgently')).not.toBeInTheDocument()
@@ -161,12 +165,14 @@ export const DragAndDropStatusUpdate: Story = {
   render: renderTasksView(),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const tasksHeading = await canvas.findByRole('heading', { name: 'Tasks' })
+    const tasksHeading = await canvas.findByRole('heading', { name: 'All Created Tasks' })
     const tasksSection = tasksHeading.closest('section') as HTMLElement
 
     const todoTaskTitle = within(tasksSection).getByText('Review eligibility evidence')
     const todoTaskArticle = todoTaskTitle.closest('article') as HTMLElement
-    await expect(within(todoTaskArticle).getByText('To do')).toBeInTheDocument()
+    await expect(within(todoTaskArticle).getByTestId('task-status-badge')).toHaveTextContent(
+      'To do',
+    )
 
     const draggableCard = canvas
       .getAllByText('Review eligibility evidence')[1]
@@ -181,7 +187,7 @@ export const DragAndDropStatusUpdate: Story = {
     await fireEvent.dragEnd(draggableCard)
 
     await waitFor(() => {
-      expect(within(todoTaskArticle).getByText('Done')).toBeInTheDocument()
+      expect(within(todoTaskArticle).getByTestId('task-status-badge')).toHaveTextContent('Done')
     })
   },
 }

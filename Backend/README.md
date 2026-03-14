@@ -1,6 +1,6 @@
 # Caseworker Tasks API
 
-A RESTful API for managing caseworker tasks, built with **Node.js**, **Express**, **MongoDB (Mongoose)**, and documented with **Swagger/OpenAPI**. Validation is handled by **Zod** and the test suite runs on **Vitest** with an in-memory MongoDB instance.
+A RESTful API for creating and managing caseworker tasks, built with **Node.js**, **Express**, **MongoDB (Mongoose)**, and documented with **Swagger/OpenAPI 3.0**. Validation is handled by **Zod** and the test suite runs on **Vitest** with an in-memory MongoDB instance — no external test database required.
 
 ---
 
@@ -14,6 +14,7 @@ A RESTful API for managing caseworker tasks, built with **Node.js**, **Express**
 - [Environment Variables](#environment-variables)
 - [Running the Server](#running-the-server)
 - [API Reference](#api-reference)
+  - [Root](#root)
   - [Health Check](#health-check)
   - [Tasks](#tasks)
 - [Data Model](#data-model)
@@ -25,13 +26,14 @@ A RESTful API for managing caseworker tasks, built with **Node.js**, **Express**
 
 ## Features
 
-- Create, retrieve, and delete tasks
-- Update a task's status independently (workflow-safe `PATCH`)
-- Input validation via **Zod** schemas
-- Structured, consistent error responses
-- Auto-generated **OpenAPI 3.0** documentation (Swagger UI)
-- Health check endpoint
-- In-memory MongoDB test environment (no test database required)
+- Create, partially update, and delete tasks
+- Dedicated `PATCH /:id/status` endpoint for safe, isolated status transitions
+- Full partial update via `PATCH /:id` — update any combination of fields in one request
+- Input validation via **Zod** schemas with descriptive error messages
+- Structured, consistent JSON error responses across all endpoints
+- Auto-generated **OpenAPI 3.0** documentation with reusable schemas and responses (Swagger UI)
+- Root and health check endpoints
+- In-memory MongoDB test environment (no test database needed)
 
 ---
 
@@ -47,6 +49,7 @@ A RESTful API for managing caseworker tasks, built with **Node.js**, **Express**
 | Testing    | Vitest + Supertest + mongodb-memory-server |
 | CORS       | cors                                       |
 | Config     | dotenv                                     |
+| Dev server | nodemon                                    |
 
 ---
 
@@ -61,20 +64,23 @@ A RESTful API for managing caseworker tasks, built with **Node.js**, **Express**
 │   │   ├── db.js               # Mongoose connect/disconnect helpers
 │   │   └── env.js              # Environment variable loading & defaults
 │   ├── docs/
-│   │   └── swagger.js          # swagger-jsdoc configuration
+│   │   └── swagger.js          # OpenAPI 3.0 spec — component schemas, responses & server config
 │   ├── middlewares/
-│   │   ├── error.js            # Global error handler
+│   │   ├── error.js            # Global error handler (HttpError, Mongoose errors, 500)
 │   │   └── notFound.js         # 404 catch-all handler
 │   ├── modules/
 │   │   └── tasks/
-│   │       ├── task.controller.js   # Request/response handling
+│   │       ├── task.controller.js   # Request/response handling & Zod validation
 │   │       ├── task.model.js        # Mongoose schema & model
-│   │       ├── task.routes.js       # Express router
-│   │       ├── task.service.js      # Business / DB logic
-│   │       └── task.validation.js   # Zod schemas
+│   │       ├── task.routes.js       # Express router with full OpenAPI JSDoc annotations
+│   │       ├── task.service.js      # Business / DB logic (CRUD operations)
+│   │       └── task.validation.js   # Zod schemas (create, update, updateStatus)
 │   └── utils/
-│       ├── asyncHandler.js     # Wraps async controllers to catch errors
-│       └── httpError.js        # Custom HttpError class
+│       ├── asyncHandler.js     # Wraps async controllers to forward errors to Express
+│       └── httpError.js        # Custom HttpError class (status + message + details)
+├── test/
+│   ├── setup.js                # Vitest global setup — spins up MongoMemoryServer
+│   └── tasks.test.js           # Integration tests for all task endpoints
 ├── vitest.config.js
 └── package.json
 ```
@@ -85,7 +91,7 @@ A RESTful API for managing caseworker tasks, built with **Node.js**, **Express**
 
 - **Node.js** v18 or higher
 - **npm** v9 or higher
-- A **MongoDB** instance (Atlas or local). A default Atlas URI is embedded as a fallback, but it is strongly recommended to provide your own via a `.env` file.
+- A **MongoDB** instance — MongoDB Atlas (cloud) or a local MongoDB installation. `MONGODB_URI` has no built-in default and **must** be set via `.env`.
 
 ---
 
@@ -135,19 +141,19 @@ Create a `.env` file in the project root with the following keys:
 NODE_ENV=development
 PORT=4000
 
-# MongoDB
+# MongoDB — required, no fallback
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>
 
 # CORS — origin allowed to call the API
 CORS_ORIGIN=http://localhost:5173
 ```
 
-| Variable      | Default                 | Description                     |
-| ------------- | ----------------------- | ------------------------------- |
-| `NODE_ENV`    | `development`           | Runtime environment             |
-| `PORT`        | `4000`                  | Port the HTTP server listens on |
-| `MONGODB_URI` | Atlas fallback URI      | MongoDB connection string       |
-| `CORS_ORIGIN` | `http://localhost:5173` | Allowed CORS origin             |
+| Variable      | Default                 | Required | Description                     |
+| ------------- | ----------------------- | -------- | ------------------------------- |
+| `NODE_ENV`    | `development`           | ❌       | Runtime environment             |
+| `PORT`        | `4000`                  | ❌       | Port the HTTP server listens on |
+| `MONGODB_URI` | —                       | ✅       | MongoDB connection string       |
+| `CORS_ORIGIN` | `http://localhost:5173` | ❌       | Allowed CORS origin             |
 
 > ⚠️ **Never commit your `.env` file** or real credentials to version control.
 
@@ -155,12 +161,12 @@ CORS_ORIGIN=http://localhost:5173
 
 ## Running the Server
 
-| Command              | Description                                    |
-| -------------------- | ---------------------------------------------- |
-| `npm run dev`        | Start with `--watch` (auto-restart on changes) |
-| `npm start`          | Start normally (production)                    |
-| `npm test`           | Run the full test suite once                   |
-| `npm run test:watch` | Run tests in watch mode                        |
+| Command              | Description                                              |
+| -------------------- | -------------------------------------------------------- |
+| `npm run dev`        | Start with `node --watch` (auto-restart on file changes) |
+| `npm start`          | Start normally (production)                              |
+| `npm test`           | Run the full test suite once                             |
+| `npm run test:watch` | Run tests in watch mode                                  |
 
 ---
 
@@ -174,11 +180,25 @@ http://localhost:4000
 
 ---
 
+### Root
+
+#### `GET /`
+
+Confirms the API is reachable.
+
+**Response `200`**
+
+```json
+{ "message": "Task API is running" }
+```
+
+---
+
 ### Health Check
 
 #### `GET /health`
 
-Confirms the server is running.
+Lightweight liveness check.
 
 **Response `200`**
 
@@ -266,23 +286,63 @@ Retrieve a single task by its MongoDB ObjectId.
 
 **Response `200`** — Returns the task object.
 
+**Response `400`** — `id` is not a valid MongoDB ObjectId.
+
+```json
+{ "message": "Invalid ID format" }
+```
+
 **Response `404`**
 
 ```json
 { "message": "Task not found" }
 ```
 
-**Response `400`** — Returned when `id` is not a valid ObjectId format.
+---
+
+#### `PATCH /api/tasks/:id`
+
+Partially update a task. Send only the fields you want to change — at least one field is required.
+
+**Path Parameters**
+
+| Param | Description                  |
+| ----- | ---------------------------- |
+| `id`  | MongoDB ObjectId of the task |
+
+**Request Body**
 
 ```json
-{ "message": "Invalid ID format" }
+{
+  "title": "Updated case review",
+  "dueAt": "2026-03-25T00:00:00.000Z"
+}
+```
+
+| Field         | Type        | Required | Constraints                        |
+| ------------- | ----------- | -------- | ---------------------------------- |
+| `title`       | string      | ❌       | 2–120 characters                   |
+| `description` | string      | ❌       | Max 2000 characters                |
+| `status`      | string      | ❌       | `todo` \| `in_progress` \| `done`  |
+| `dueAt`       | date string | ❌       | Any value coercible to a JS `Date` |
+
+> At least one field must be present in the request body, otherwise a `400` is returned.
+
+**Response `200`** — Returns the updated task object.
+
+**Response `400`** — Validation error or empty body.
+
+**Response `404`**
+
+```json
+{ "message": "Task not found" }
 ```
 
 ---
 
 #### `PATCH /api/tasks/:id/status`
 
-Update only the status of a task.
+Update **only** the status of a task. Use this for workflow transitions.
 
 **Path Parameters**
 
@@ -379,7 +439,7 @@ All errors return a consistent JSON shape:
 
 ## Testing
 
-Tests use **Vitest** with **Supertest** for HTTP-level integration testing and **mongodb-memory-server** for a real, isolated MongoDB instance — no external database required.
+Tests use **Vitest** with **Supertest** for HTTP-level integration testing and **mongodb-memory-server** for a fully isolated, real MongoDB instance — no external database or seeding required.
 
 ```bash
 # Run tests once
@@ -389,13 +449,22 @@ npm test
 npm run test:watch
 ```
 
-Test setup is configured via `vitest.config.js` and bootstrapped in `test/setup.js`.
+### Test Coverage
+
+| Test case                          | What it verifies                                                     |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| Creates and lists tasks            | `POST /api/tasks` returns 201 with correct body; `GET` returns array |
+| Updates status via dedicated route | `PATCH /api/tasks/:id/status` correctly transitions status           |
+| Partially updates task fields      | `PATCH /api/tasks/:id` updates individual fields (e.g. title)        |
+| Rejects invalid payloads           | `POST /api/tasks` with a too-short title returns 400                 |
+
+**Setup** (`test/setup.js`): Spins up a `MongoMemoryServer` before all tests and tears it down after — completely isolated from any real database.
 
 ---
 
 ## API Documentation (Swagger)
 
-Interactive API documentation is auto-generated from JSDoc comments in the source code using **swagger-jsdoc** and served via **swagger-ui-express**.
+Interactive API documentation is auto-generated from OpenAPI 3.0 JSDoc annotations in `src/modules/**/*.js` and served via **swagger-ui-express**.
 
 Once the server is running, open:
 
@@ -403,4 +472,8 @@ Once the server is running, open:
 http://localhost:4000/docs
 ```
 
-The spec is built from **OpenAPI 3.0** annotations found in `src/modules/**/*.js`.
+The Swagger spec includes:
+
+- **Reusable schemas** — `Task`, `CreateTaskInput`, `UpdateTaskInput`, `UpdateStatusInput`, `ErrorResponse`
+- **Reusable responses** — `BadRequest`, `NotFound`, `InvalidId`, `InternalError`
+- **Server config** — pre-pointed at `http://localhost:4000` so the **Try it out** button works immediately

@@ -116,6 +116,7 @@ function onSubmit() {
         >
         <input
           id="task-title"
+          aria-label="Task title"
           v-model="title"
           class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500"
           placeholder="e.g. Review new claim"

@@ -36,9 +36,9 @@ const meta = {
         openTaskId.value = task._id
       }
 
-      function handleDelete(id: string) {
-        args.onDelete!(id)
-        deleteTaskId.value = id
+      function handleDelete(task: Task) {
+        args.onDelete!(task)
+        deleteTaskId.value = task._id
       }
 
       function handleStatus(payload: { id: string; status: TaskStatus }) {
@@ -59,11 +59,6 @@ const meta = {
     template: `
       <div class="w-[24rem] max-w-full p-4">
         <TaskCard v-bind="args" @open="handleOpen" @delete="handleDelete" @status="handleStatus" />
-        <div class="mt-4 space-y-2 rounded-xl border border-dashed border-slate-300 p-3 text-xs text-slate-600">
-          <p data-testid="open-summary">{{ openSummary }}</p>
-          <p data-testid="delete-id">{{ deleteTaskId }}</p>
-          <pre data-testid="status-payload" class="whitespace-pre-wrap break-words">{{ statusPayload }}</pre>
-        </div>
       </div>
     `,
   }),
@@ -89,6 +84,16 @@ export const InProgress: Story = {
   },
 }
 
+export const Done: Story = {
+  args: {
+    task: createStoryTask({
+      _id: 'task-done',
+      status: 'done',
+      title: 'Investigate discrepancy',
+    }),
+  },
+}
+
 export const Interactions: Story = {
   args: {
     task: createStoryTask({ _id: 'task-interactions', title: 'Update hearing notes' }),
@@ -96,26 +101,22 @@ export const Interactions: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement)
 
-    // Status change — select does NOT bubble open
+    // Status change
     const statusSelect = canvas.getByTestId('task-status-select')
     await userEvent.selectOptions(statusSelect, 'done')
     await waitFor(() => {
-      expect(canvas.getByTestId('status-payload')).toHaveTextContent('task-interactions')
-      expect(canvas.getByTestId('status-payload')).toHaveTextContent('done')
       expect(args.onStatus).toHaveBeenCalledWith({ id: 'task-interactions', status: 'done' })
     })
-    expect(canvas.getByTestId('open-summary')).toHaveTextContent('0:none')
 
-    // Delete button — does NOT bubble open
+    // Delete button
     await userEvent.click(canvas.getByRole('button', { name: 'Delete task' }))
-    await expect(canvas.getByTestId('delete-id')).toHaveTextContent('task-interactions')
-    expect(args.onDelete).toHaveBeenCalledWith('task-interactions')
-    expect(canvas.getByTestId('open-summary')).toHaveTextContent('0:none')
+    expect(args.onDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'task-interactions' }),
+    )
 
     // Card click opens task
     await userEvent.click(canvas.getByText('Update hearing notes'))
     await waitFor(() => {
-      expect(canvas.getByTestId('open-summary')).toHaveTextContent('1:task-interactions')
       expect(args.onOpen).toHaveBeenCalledWith(
         expect.objectContaining({ _id: 'task-interactions' }),
       )

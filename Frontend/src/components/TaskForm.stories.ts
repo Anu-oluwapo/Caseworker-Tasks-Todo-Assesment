@@ -20,39 +20,13 @@ const meta = {
   render: (args) => ({
     components: { TaskForm },
     setup() {
-      const submitted = ref('')
-      const submittedCount = ref(0)
-      const cancelCount = ref(0)
-      const submittedJson = computed(() => submitted.value || 'none')
-
-      function handleSubmit(payload: { title: string; description?: string; dueAt: string }) {
-        args.onSubmit!(payload)
-        submitted.value = JSON.stringify(payload)
-        submittedCount.value += 1
-      }
-
-      function handleCancel() {
-        args.onCancel!()
-        cancelCount.value += 1
-      }
-
       return {
         args,
-        cancelCount,
-        handleCancel,
-        handleSubmit,
-        submittedCount,
-        submittedJson,
       }
     },
     template: `
       <div class="w-[28rem] max-w-full p-4">
-        <TaskForm v-bind="args" @submit="handleSubmit" @cancel="handleCancel" />
-        <div class="mt-4 space-y-2 rounded-xl border border-dashed border-slate-300 p-3 text-xs text-slate-600">
-          <p data-testid="submit-count">{{ submittedCount }}</p>
-          <p data-testid="cancel-count">{{ cancelCount }}</p>
-          <pre data-testid="submit-payload" class="whitespace-pre-wrap break-words">{{ submittedJson }}</pre>
-        </div>
+        <TaskForm v-bind="args" @submit="args.onSubmit" @cancel="args.onCancel" />
       </div>
     `,
   }),
@@ -80,7 +54,6 @@ export const CreateMode: Story = {
     await userEvent.click(canvas.getByTestId('form-submit-btn'))
 
     await waitFor(() => {
-      expect(canvas.getByTestId('submit-count')).toHaveTextContent('1')
       expect(args.onSubmit).toHaveBeenCalledOnce()
     })
 
@@ -124,7 +97,6 @@ export const ValidationStates: Story = {
       'Title must be at least 2 characters.',
     )
     expect(args.onSubmit).not.toHaveBeenCalled()
-    expect(canvas.getByTestId('submit-count')).toHaveTextContent('0')
   },
 }
 
@@ -150,7 +122,6 @@ export const EditMode: Story = {
 
     // Cancel button emits @cancel
     await userEvent.click(canvas.getByTestId('form-cancel-btn'))
-    await expect(canvas.getByTestId('cancel-count')).toHaveTextContent('1')
     expect(args.onCancel).toHaveBeenCalledOnce()
 
     // Edit title and save
@@ -159,12 +130,10 @@ export const EditMode: Story = {
     await userEvent.click(canvas.getByTestId('form-submit-btn'))
 
     await waitFor(() => {
-      expect(canvas.getByTestId('submit-count')).toHaveTextContent('1')
       expect(args.onSubmit).toHaveBeenCalledOnce()
     })
 
     const [submittedPayload] = (args.onSubmit as ReturnType<typeof fn>).mock.calls[0]
     expect(submittedPayload.title).toBe('Review amended case notes')
-    expect(canvas.getByTestId('submit-payload')).toHaveTextContent('Review amended case notes')
   },
 }

@@ -6,7 +6,7 @@ defineProps<{ tasks: Task[] }>()
 
 const emit = defineEmits<{
   (e: 'status', value: { id: string; status: TaskStatus }): void
-  (e: 'delete', id: string): void
+  (e: 'delete', task: Task): void
   (e: 'open', task: Task): void
 }>()
 </script>

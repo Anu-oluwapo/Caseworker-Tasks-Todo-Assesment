@@ -8,7 +8,7 @@ import type { Task, TaskStatus } from '../types/task'
 
 const store = useTasksStore()
 
-const toDeleteId = ref<string | null>(null)
+const toDelete = ref<Task | null>(null)
 const editingTask = ref<Task | null>(null)
 const editSaving = ref(false)
 const draggingTaskId = ref<string | null>(null)
@@ -102,8 +102,8 @@ async function onDrop(status: TaskStatus) {
   draggingTaskId.value = null
 }
 
-function askDelete(id: string) {
-  toDeleteId.value = id
+function askDelete(task: Task) {
+  toDelete.value = task
 }
 
 function openEditModal(task: Task) {
@@ -117,9 +117,9 @@ function closeEditModal() {
 }
 
 async function confirmDelete() {
-  if (!toDeleteId.value) return
-  await store.deleteTask(toDeleteId.value)
-  toDeleteId.value = null
+  if (!toDelete.value) return
+  await store.deleteTask(toDelete.value._id)
+  toDelete.value = null
 }
 </script>
 
@@ -338,10 +338,10 @@ async function confirmDelete() {
     </div>
 
     <ConfirmDialog
-      :open="!!toDeleteId"
-      title="Delete task?"
+      :open="!!toDelete"
+      :title="`Delete task (${toDelete?.title}) ?`"
       message="This cannot be undone."
-      @cancel="toDeleteId = null"
+      @cancel="toDelete = null"
       @confirm="confirmDelete"
     />
   </main>
