@@ -89,49 +89,57 @@ function onSubmit() {
 
 <template>
   <form
-    class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+    class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5"
     @submit.prevent="onSubmit"
   >
-    <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">{{ heading }}</h2>
+    <h2
+      class="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-lg"
+    >
+      {{ heading }}
+    </h2>
 
     <p
       v-if="error"
-      class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700"
+      class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
     >
       {{ error }}
     </p>
 
     <div class="mt-4 grid gap-4">
       <div>
-        <label for="task-title" class="text-sm font-medium text-slate-700">Title</label>
+        <label for="task-title" class="text-sm font-medium text-slate-700 dark:text-slate-300"
+          >Title</label
+        >
         <input
           id="task-title"
           v-model="title"
-          class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500"
+          class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500"
           placeholder="e.g. Review new claim"
         />
       </div>
 
       <div>
-        <label for="task-description" class="text-sm font-medium text-slate-700"
+        <label for="task-description" class="text-sm font-medium text-slate-700 dark:text-slate-300"
           >Description (optional)</label
         >
         <textarea
           id="task-description"
           v-model="description"
-          class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500"
+          class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500"
           rows="3"
           placeholder="Extra context..."
         />
       </div>
 
       <div>
-        <label for="task-due-date" class="text-sm font-medium text-slate-700">Due date/time</label>
+        <label for="task-due-date" class="text-sm font-medium text-slate-700 dark:text-slate-300"
+          >Due date/time</label
+        >
         <input
           id="task-due-date"
           v-model="dueAt"
           type="datetime-local"
-          class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+          class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
         />
       </div>
 
@@ -139,7 +147,7 @@ function onSubmit() {
         <button
           v-if="mode === 'edit'"
           type="button"
-          class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
           @click="emit('cancel')"
         >
           Cancel
